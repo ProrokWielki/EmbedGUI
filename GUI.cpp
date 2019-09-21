@@ -1,12 +1,14 @@
 #include "GUI.hpp"
-
-#include "../DataContainer.hpp"
+#include "Canvas.hpp"
 
 uint8_t GUI::width_ = 32;
 uint8_t GUI::height_ = 32;
 
-uint8_t * GUI::front_framebuffer_ = DataContainer::FrameBuffer1;  // Todo it cant be like that.
-uint8_t * GUI::back_framebuffer_ = DataContainer::FrameBuffer2;
+uint8_t FrameBuffer1[32][32];
+uint8_t FrameBuffer2[32][32];
+
+uint8_t * GUI::front_framebuffer_ = &FrameBuffer1[0][0];  // Todo it cant be like that.
+uint8_t * GUI::back_framebuffer_ = &FrameBuffer2[0][0];
 
 void GUI::swap_framebuffers()
 {
