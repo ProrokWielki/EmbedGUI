@@ -32,6 +32,11 @@ public:
         setPixelMap((frames_[current_frame]));
     }
 
+    bool is_self_updatable() override
+    {
+        return true;
+    }
+
 private:
     uint8_t current_frame{0};
     std::array<uint8_t *, NUM_OF_FRAMES> frames_;

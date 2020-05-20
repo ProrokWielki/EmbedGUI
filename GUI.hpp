@@ -48,6 +48,11 @@ public:
         updateNedded = true;
     }
 
+    static uint8_t * getFrontFrameBuffer()
+    {
+        return front_framebuffer_;
+    }
+
     static uint8_t * getBackFrameBuffer()
     {
         return back_framebuffer_;

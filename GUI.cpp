@@ -1,4 +1,5 @@
 #include "GUI.hpp"
+#include "BSP.hpp"
 #include "Canvas.hpp"
 
 uint8_t GUI::width_ = 32;
@@ -15,7 +16,8 @@ void GUI::swap_framebuffers()
     if (curent_canvas_->isReady() and isDoubleFrameBuffer)
     {
         std::swap(front_framebuffer_, back_framebuffer_);
-        front_framebufferPointer = front_framebuffer_;
+
+        BSP::display.set_frame_buffer(front_framebuffer_);
     }
 }
 
@@ -23,11 +25,14 @@ void GUI::update()
 {
     if (updateNedded)
     {
-        curent_canvas_ = transiton(recieved_);
         updateNedded = false;
-        curent_canvas_->clear();
-        curent_canvas_->init();
+        auto tmp = transiton(recieved_);
+        if (tmp != curent_canvas_)
+        {
+            curent_canvas_ = transiton(recieved_);
+            curent_canvas_->clear();
+            curent_canvas_->init();
+        }
     }
-
     curent_canvas_->update();
 }

@@ -34,8 +34,33 @@ public:
     {
     }
 
+    virtual bool is_self_updatable()
+    {
+        return false;
+    }
+
     virtual ~Widget()
     {
+    }
+
+    void setPixelMap(uint8_t * width)
+    {
+        pixel_map_ = width;
+    }
+
+    bool is_visible()
+    {
+        return is_visible_;
+    }
+
+    void hide()
+    {
+        is_visible_ = false;
+    }
+
+    void show()
+    {
+        is_visible_ = true;
     }
 
 protected:
@@ -48,15 +73,12 @@ protected:
         height_ = width;
     }
 
-    void setPixelMap(uint8_t * width)
-    {
-        pixel_map_ = width;
-    }
-
     uint8_t width_{};
     uint8_t height_{};
 
     uint8_t * pixel_map_{};
+
+    bool is_visible_{true};
 };
 
 #endif /* APP_GUI_WIDGET_HPP_ */

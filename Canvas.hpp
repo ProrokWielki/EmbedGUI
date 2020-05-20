@@ -9,6 +9,7 @@
 #define APP_GUI_CANVAS_HPP_
 
 #include <cstdint>
+#include <cstring>
 
 #include "GUI.hpp"
 #include "Widget.hpp"
@@ -28,21 +29,26 @@ public:
 
     void validate()
     {
+
         ready = false;
         frame_buffer_ = GUI::getBackFrameBuffer();
+        memset(frame_buffer_, 0, 32 * 32);
         for (uint8_t widget = 0; widget < num_of_widgets; widget++)
         {
             uint8_t widget_line, line;
             for (line = widgets_and_positions[widget].y, widget_line = 0;
-                 line < widgets_and_positions[widget].widget->getHeight() - widgets_and_positions[widget].y and line < height_; line++, widget_line++)
+                 line < widgets_and_positions[widget].widget->getHeight() + widgets_and_positions[widget].y and line < height_; line++, widget_line++)
             {
-                uint8_t column, widget_column;
-                for (column = widgets_and_positions[widget].x, widget_column = 0;
-                     column < (widgets_and_positions[widget].widget)->getWidth() - widgets_and_positions[widget].x and column < width_;
-                     column++, widget_column++)
+                if (widgets_and_positions[widget].widget->is_visible())
                 {
-                    frame_buffer_[column + line * width_] =
-                    widgets_and_positions[widget].widget->get_pixel_map()[widget_column + widget_line * widgets_and_positions[widget].widget->getWidth()];
+                    uint8_t column, widget_column;
+                    for (column = widgets_and_positions[widget].x, widget_column = 0;
+                         column < (widgets_and_positions[widget].widget)->getWidth() + widgets_and_positions[widget].x and column < width_;
+                         column++, widget_column++)
+                    {
+                        frame_buffer_[column + line * width_] =
+                        widgets_and_positions[widget].widget->get_pixel_map()[widget_column + widget_line * widgets_and_positions[widget].widget->getWidth()];
+                    }
                 }
             }
         }
@@ -51,7 +57,10 @@ public:
 
     void clear()
     {
+
         ready = false;
+
+        num_of_widgets = 0;
 
         frame_buffer_ = GUI::getBackFrameBuffer();
 
@@ -60,19 +69,14 @@ public:
             frame_buffer_[i] = 0;
         }
 
-        num_of_widgets = 0;
-
         ready = true;
     }
 
     bool isReady()
     {
-        if (ready == true)
-        {
-            ready = false;
-            return true;
-        }
-        return ready;
+        auto return_value = ready;
+        ready = false;
+        return return_value;
     }
 
     virtual void init()
@@ -83,13 +87,25 @@ public:
 
     void update()
     {
-        ready = false;
+        bool needs_to_validate = false;
+        //        if (not ready)
+        //            return;
+
+        //        ready = false;
         for (uint8_t widget = 0; widget < num_of_widgets; widget++)
         {
-            widgets_and_positions[widget].widget->update();
+            if (widgets_and_positions[widget].widget->is_self_updatable())
+            {
+                needs_to_validate = true;
+                widgets_and_positions[widget].widget->update();
+            }
         }
-        validate();
         up_date();
+
+        if (needs_to_validate)
+            validate();
+
+        //        ready = true;
     }
 
     virtual ~Canvas() = default;
@@ -109,7 +125,7 @@ private:
     std::array<WidgetAndPositions, 10> widgets_and_positions;
     uint8_t num_of_widgets{0};
 
-    bool ready{false};
+    volatile bool ready{true};
 };
 
 #endif /* APP_GUI_CANVAS_HPP_ */
