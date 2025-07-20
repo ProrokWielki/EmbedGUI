@@ -8,15 +8,21 @@
 #ifndef APP_GUI_GUI_HPP_
 #define APP_GUI_GUI_HPP_
 
-#include <array>
+#include <algorithm>
 #include <cstdint>
-#include <map>
+#include <functional>
+#include <span>
 #include <utility>
 
 enum class Signal;
 class Canvas;
 
-typedef std::map<std::pair<Canvas *, Signal>, Canvas *> CanvasesTransitions;
+struct Transition {
+    Canvas * source_canvas;
+    Signal trigger;
+    Canvas * target_canvas;
+};
+
 
 class GUI
 {
@@ -25,9 +31,12 @@ public:
     /**
      *  Default constructor
      */
-    GUI(CanvasesTransitions transitionMatrix, Canvas * startState) : transitionMatrix_(transitionMatrix), curent_canvas_(startState)
+
+    GUI(std::span<Transition> transitionMatrix, Canvas * startState, std::function<void(uint8_t *)> set_framebuffer_callback, uint8_t *front_frame_buffer, uint8_t* back_frame_buffer)
+        : transitionMatrix_(transitionMatrix), curent_canvas_(startState), set_framebuffer_callback_(std::move(set_framebuffer_callback))
     {
-        //        curent_canvas_->init();
+        front_framebuffer_ = front_frame_buffer;
+        back_framebuffer_ = back_frame_buffer;
     }
 
     /**
@@ -39,7 +48,7 @@ public:
 
     uint8_t * getFrameBuffer()
     {
-        return front_framebufferPointer;
+        return front_framebuffer_;
     }
 
     void signal_callback(const Signal & signal)
@@ -59,21 +68,20 @@ public:
     }
 
 private:
-    CanvasesTransitions transitionMatrix_;
+    std::span<Transition> transitionMatrix_;
 
     Canvas * transiton(Signal signal)
     {
 
-        Canvas * state_to_retrun;
-        try
+        auto it = std::find_if(transitionMatrix_.cbegin(), transitionMatrix_.cend(),
+                               [&](Transition transition) { return transition.source_canvas == curent_canvas_ && transition.trigger == signal; });
+
+        if (it == transitionMatrix_.end())
         {
-            state_to_retrun = transitionMatrix_.at(std::make_pair(curent_canvas_, signal));
-        } catch (...)
-        {
-            state_to_retrun = curent_canvas_;
+            return curent_canvas_;
         }
 
-        return state_to_retrun;
+        return it->target_canvas;
     }
 
     Signal recieved_{};
@@ -86,11 +94,10 @@ private:
     static uint8_t * front_framebuffer_;
     static uint8_t * back_framebuffer_;
 
-    uint8_t * front_framebufferPointer{front_framebuffer_};
-
     bool isDoubleFrameBuffer{true};
-
+    
     Canvas * curent_canvas_;
+    std::function<void(uint8_t *)> set_framebuffer_callback_;
 };
 
 #endif /* APP_GUI_GUI_HPP_ */
