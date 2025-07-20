@@ -17,66 +17,27 @@
 class Canvas
 {
 public:
-    Canvas() = default;
+    Canvas()
+    {
+        validate();
+    }
 
     /**
      * @brief Adds widget to the canvas.
      */
     void add(Widget * widget, uint8_t x = 0, uint8_t y = 0)
     {
-        widgets_and_positions[num_of_widgets++] = {x, y, widget};
+        widgets_and_positions.push_back({.x = x, .y = y, .widget = widget});
     }
 
-    void validate()
+    [[nodiscard]]  bool isReady() const
     {
-
-        ready = false;
-        frame_buffer_ = GUI::getBackFrameBuffer();
-        memset(frame_buffer_, 0, 32 * 32);
-        for (uint8_t widget = 0; widget < num_of_widgets; widget++)
-        {
-            uint8_t widget_line, line;
-            for (line = widgets_and_positions[widget].y, widget_line = 0;
-                 line < widgets_and_positions[widget].widget->getHeight() + widgets_and_positions[widget].y and line < height_; line++, widget_line++)
-            {
-                if (widgets_and_positions[widget].widget->is_visible())
-                {
-                    uint8_t column, widget_column;
-                    for (column = widgets_and_positions[widget].x, widget_column = 0;
-                         column < (widgets_and_positions[widget].widget)->getWidth() + widgets_and_positions[widget].x and column < width_;
-                         column++, widget_column++)
-                    {
-                        frame_buffer_[column + line * width_] =
-                        widgets_and_positions[widget].widget->get_pixel_map()[widget_column + widget_line * widgets_and_positions[widget].widget->getWidth()];
-                    }
-                }
-            }
-        }
-        ready = true;
+        return ready;
     }
 
-    void clear()
+    void swapped()
     {
-
         ready = false;
-
-        num_of_widgets = 0;
-
-        frame_buffer_ = GUI::getBackFrameBuffer();
-
-        for (uint16_t i = 0; i < height_ * width_; i++)
-        {
-            frame_buffer_[i] = 0;
-        }
-
-        ready = true;
-    }
-
-    bool isReady()
-    {
-        auto return_value = ready;
-        ready = false;
-        return return_value;
     }
 
     virtual void init()
@@ -87,43 +48,137 @@ public:
 
     void update()
     {
-        bool needs_to_validate = false;
-        //        if (not ready)
-        //            return;
-
-        //        ready = false;
-        for (uint8_t widget = 0; widget < num_of_widgets; widget++)
+        if (ready == true)
         {
-            if (widgets_and_positions[widget].widget->is_self_updatable())
-            {
-                needs_to_validate = true;
-                widgets_and_positions[widget].widget->update();
-            }
+            return;
         }
+
         up_date();
 
-        if (needs_to_validate)
-            validate();
+        validate();
 
-        //        ready = true;
+        ready = true;
+    }
+
+    void clear()
+    {
+        ready = false;
+        widgets_and_positions.clear();
+        clear_framebuffer();
+        ready = true;
+    }
+
+    [[nodiscard]] constexpr static uint8_t get_width()
+    {
+        return width_;
+    }
+
+    [[nodiscard]] constexpr static uint8_t get_height()
+    {
+        return height_;
+    }
+
+    [[nodiscard]] constexpr static uint8_t max_x_index()
+    {
+        return get_width() - 1U;
+    }
+
+    [[nodiscard]] constexpr static uint8_t max_y_index()
+    {
+        return get_height() - 1U;
     }
 
     virtual ~Canvas() = default;
 
-private:
-    struct WidgetAndPositions {
-        uint8_t x;
-        uint8_t y;
-        Widget * widget;
-    };
-
+protected:
     uint8_t * frame_buffer_{};
 
-    uint8_t width_{32};
-    uint8_t height_{32};
+private:
+    bool is_pixel_position_valid(uint8_t x, uint8_t y)
+    {
+        return x < width_ && y < height_;
+    }
 
-    std::array<WidgetAndPositions, 10> widgets_and_positions;
-    uint8_t num_of_widgets{0};
+    void validate_children(const Widget * widget)
+    {
+        for(const auto& child: widget->get_children())
+        {
+            if (child.widget == nullptr)
+            {
+                continue;
+            }
+            child.widget->update();
+            validate_children(child.widget);
+        }
+    }
+
+    void validate()
+    {
+
+        frame_buffer_ = GUI::getBackFrameBuffer();
+        clear_framebuffer();
+
+        for (auto& widget: widgets_and_positions)
+        {
+
+            if (widget.widget == nullptr || not widget.widget->is_visible())
+            {
+                continue;
+            }
+            widget.widget->update();
+            put_widget_on_framebuffer(widget);
+        }
+
+        postprocess();
+    }
+
+    void put_pixel_on_frame_buffer(uint8_t x, uint8_t y, uint8_t pixel_value)
+    {
+        if (not is_pixel_position_valid(x, y))
+        {
+            return;
+        }
+
+        frame_buffer_[width_ * y + x] = pixel_value;
+    }
+
+    void put_widget_on_framebuffer(const WidgetAndPositions & widget_and_position, uint8_t x_offset = 0, uint8_t y_offset = 0)
+    {
+        const Widget & widget = *(widget_and_position.widget);
+
+        uint8_t x_on_canvas = widget_and_position.x + x_offset;
+        uint8_t y_on_canvas = widget_and_position.y + y_offset;
+
+        for (uint8_t widget_x{0}; widget_x < widget.getWidth(); ++widget_x)
+        {
+            for (uint8_t widget_y{0}; widget_y < widget.getHeight(); ++widget_y)
+            {
+                uint8_t current_y = y_on_canvas + widget_y;
+                uint8_t current_x = x_on_canvas + widget_x;
+
+                put_pixel_on_frame_buffer(current_x, current_y, widget.get_pixel_map()[widget_x + widget_y * widget.getWidth()]);
+            }
+        }
+
+        for (const auto& child : widget.get_children())
+        {
+            put_widget_on_framebuffer(child, x_on_canvas + x_offset, y_on_canvas + y_offset);
+        }
+    }
+
+    virtual void postprocess()
+    {
+    }
+
+    void clear_framebuffer()
+    {
+        memset(frame_buffer_, 0, 32 * 32);
+    }
+
+    constexpr static uint8_t width_{32};
+    constexpr static uint8_t height_{32};
+
+    std::vector<WidgetAndPositions> widgets_and_positions;
 
     volatile bool ready{true};
 };
