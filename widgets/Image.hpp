@@ -9,7 +9,7 @@
 #define APP_GUI_WIDGETS_IMAGE_HPP_
 
 #include "../Widget.hpp"
-#include <stdint.h>
+#include <cstdint>
 
 struct RawImage;
 
@@ -19,7 +19,7 @@ public:
     /**
      * @brief Constructor.
      */
-    Image(uint8_t width, uint8_t height, uint8_t * raw_image)
+    Image(uint8_t width, uint8_t height, const uint8_t * const raw_image)
     {
         setWidth(width);
         setHeight(height);
