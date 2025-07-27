@@ -10,3 +10,7 @@ ADD_LIBRARY(
   widgets/Text.hpp)
 
 TARGET_INCLUDE_DIRECTORIES(EmbedGUI PUBLIC . widgets)
+
+TARGET_LINK_LIBRARIES(
+  EmbedGUI
+  PUBLIC Assets)

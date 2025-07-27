@@ -15,7 +15,7 @@
 #include <Image.hpp>
 
 #include "../Widget.hpp"
-#include "Assets/Text/texts.hpp"
+#include "Texts/texts.hpp"
 
 enum class TextAlignment
 {
