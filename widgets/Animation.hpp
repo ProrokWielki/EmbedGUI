@@ -8,28 +8,27 @@
 #ifndef APP_GUI_WIDGETS_ANIMATION_HPP_
 #define APP_GUI_WIDGETS_ANIMATION_HPP_
 
-#include <array>
 #include <cstdint>
+#include <functional>
+#include <vector>
 
 #include "../Widget.hpp"
+#include <widgets/Image.hpp>
 
-template<uint8_t NUM_OF_FRAMES>
 class Animation: public Widget
 {
 public:
-    Animation(uint8_t width, uint8_t height, std::array<const uint8_t *, NUM_OF_FRAMES> frames) : frames_{frames}
+    Animation(const std::vector<std::reference_wrapper<Image>> & frames) : frames_{frames}
     {
-        setWidth(width);
-        setHeight(height);
-        setPixelMap((frames_[current_frame]));
+        update_frame();
     }
 
     void update() override
     {
-        current_frame++;
-        current_frame = current_frame >= NUM_OF_FRAMES ? 0 : current_frame;
+        ++current_frame;
+        current_frame = current_frame >= frames_.size() ? 0 : current_frame;
 
-        setPixelMap((frames_[current_frame]));
+        update_frame();
     }
 
     [[nodiscard]] bool is_self_updatable() const override
@@ -38,8 +37,15 @@ public:
     }
 
 private:
+    void update_frame()
+    {
+        setWidth(frames_[current_frame].get().getWidth());
+        setHeight(frames_[current_frame].get().getHeight());
+        setPixelMap((frames_[current_frame].get().get_pixel_map()));
+    }
+
     uint8_t current_frame{0};
-    std::array<const uint8_t *, NUM_OF_FRAMES> frames_;
+    std::vector<std::reference_wrapper<Image>> frames_;
 };
 
 #endif /* APP_GUI_WIDGETS_ANIMATION_HPP_ */
