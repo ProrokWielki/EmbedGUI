@@ -62,12 +62,12 @@ public:
         return is_visible_;
     }
 
-    void hide()
+    void hide() const
     {
         is_visible_ = false;
     }
 
-    void show()
+    void show() const
     {
         is_visible_ = true;
     }
@@ -87,7 +87,6 @@ public:
         return children_;
     }
 
-
 protected:
     void setWidth(uint8_t width)
     {
@@ -103,11 +102,10 @@ protected:
 
     const uint8_t * pixel_map_{};
 
-    bool is_visible_{true};
-    
+    mutable bool is_visible_{true};
+
 private:
     std::vector<WidgetAndPositions> children_{};
-
 };
 
 #endif /* APP_GUI_WIDGET_HPP_ */

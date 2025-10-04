@@ -43,7 +43,7 @@ public:
         {
             for (uint8_t y{0}; y < 32; ++y)
             {
-                auto [new_x, new_y] = translate_corrdinates(x, y, rotation);
+                auto [new_x, new_y] = translate_coordinates(x, y, rotation);
 
                 frame_buffer_[x + 32 * y] = tmp_frame_buffer[new_x + new_y * 32];
             }
@@ -53,7 +53,7 @@ public:
     virtual ~RotatableCanvas() = default;
 
 private:
-    Coordinates translate_corrdinates(uint8_t x, uint8_t y, Rotation rotation)
+    Coordinates translate_coordinates(uint8_t x, uint8_t y, Rotation rotation)
     {
         switch (rotation)
         {

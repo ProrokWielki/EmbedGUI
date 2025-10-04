@@ -18,7 +18,7 @@
 class Animation: public Widget
 {
 public:
-    Animation(const std::vector<std::reference_wrapper<Image>> & frames) : frames_{frames}
+    Animation(const std::vector<std::reference_wrapper<const Image>> & frames) : frames_{frames}
     {
         update_frame();
     }
@@ -45,7 +45,7 @@ private:
     }
 
     uint8_t current_frame{0};
-    std::vector<std::reference_wrapper<Image>> frames_;
+    std::vector<std::reference_wrapper<const Image>> frames_;
 };
 
 #endif /* APP_GUI_WIDGETS_ANIMATION_HPP_ */

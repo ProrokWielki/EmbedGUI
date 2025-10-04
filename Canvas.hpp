@@ -19,7 +19,7 @@ class Canvas
 public:
     Canvas()
     {
-        validate();
+        // validate(frame_buffer);
     }
 
     /**
@@ -30,7 +30,7 @@ public:
         widgets_and_positions.push_back({.x = x, .y = y, .widget = widget});
     }
 
-    [[nodiscard]]  bool isReady() const
+    [[nodiscard]] bool isReady() const
     {
         return ready;
     }
@@ -46,7 +46,7 @@ public:
 
     virtual void up_date() = 0;
 
-    void update()
+    void update(uint8_t * frame_buffer)
     {
         if (ready == true)
         {
@@ -55,13 +55,14 @@ public:
 
         up_date();
 
-        validate();
+        validate(frame_buffer);
 
         ready = true;
     }
 
-    void clear()
+    void clear(uint8_t *frame_buffer)
     {
+        frame_buffer_ = frame_buffer;
         ready = false;
         widgets_and_positions.clear();
         clear_framebuffer();
@@ -101,7 +102,7 @@ private:
 
     void validate_children(const Widget * widget)
     {
-        for(const auto& child: widget->get_children())
+        for (const auto & child : widget->get_children())
         {
             if (child.widget == nullptr)
             {
@@ -112,13 +113,13 @@ private:
         }
     }
 
-    void validate()
+    void validate(uint8_t * frame_buffer)
     {
 
-        frame_buffer_ = GUI::getBackFrameBuffer();
+        frame_buffer_ = frame_buffer;
         clear_framebuffer();
 
-        for (auto& widget: widgets_and_positions)
+        for (auto & widget : widgets_and_positions)
         {
 
             if (widget.widget == nullptr || not widget.widget->is_visible())
@@ -160,7 +161,7 @@ private:
             }
         }
 
-        for (const auto& child : widget.get_children())
+        for (const auto & child : widget.get_children())
         {
             put_widget_on_framebuffer(child, x_on_canvas + x_offset, y_on_canvas + y_offset);
         }

@@ -23,7 +23,6 @@ struct Transition {
     Canvas * target_canvas;
 };
 
-
 class GUI
 {
 
@@ -32,11 +31,11 @@ public:
      *  Default constructor
      */
 
-    GUI(std::span<Transition> transitionMatrix, Canvas * startState, std::function<void(uint8_t *)> set_framebuffer_callback, uint8_t *front_frame_buffer, uint8_t* back_frame_buffer)
-        : transitionMatrix_(transitionMatrix), curent_canvas_(startState), set_framebuffer_callback_(std::move(set_framebuffer_callback))
+    GUI(uint8_t * front_frame_buffer, uint8_t * back_frame_buffer, const std::span<const Transition> & transitionMatrix, Canvas * startState,
+        std::function<void(uint8_t *)> set_framebuffer_callback)
+    : front_framebuffer_{front_frame_buffer}, back_framebuffer_{back_frame_buffer}, transitionMatrix_(transitionMatrix), curent_canvas_(startState),
+      set_framebuffer_callback_(std::move(set_framebuffer_callback))
     {
-        front_framebuffer_ = front_frame_buffer;
-        back_framebuffer_ = back_frame_buffer;
     }
 
     /**
@@ -46,7 +45,7 @@ public:
 
     void update();
 
-    uint8_t * getFrameBuffer()
+    [[nodiscard]] uint8_t * getFrameBuffer() const
     {
         return front_framebuffer_;
     }
@@ -57,24 +56,27 @@ public:
         updateNedded = true;
     }
 
-    static uint8_t * getFrontFrameBuffer()
+    uint8_t * getFrontFrameBuffer()
     {
         return front_framebuffer_;
     }
 
-    static uint8_t * getBackFrameBuffer()
+    uint8_t * getBackFrameBuffer()
     {
         return back_framebuffer_;
     }
 
 private:
-    std::span<Transition> transitionMatrix_;
+    uint8_t * front_framebuffer_;
+    uint8_t * back_framebuffer_;
 
-    Canvas * transiton(Signal signal)
+    std::span<const Transition> transitionMatrix_;
+
+    Canvas * transition(Signal signal) const
     {
 
-        auto it = std::find_if(transitionMatrix_.cbegin(), transitionMatrix_.cend(),
-                               [&](Transition transition) { return transition.source_canvas == curent_canvas_ && transition.trigger == signal; });
+        auto it = std::ranges::find_if(transitionMatrix_,
+                                       [&](Transition transition) { return transition.source_canvas == curent_canvas_ && transition.trigger == signal; });
 
         if (it == transitionMatrix_.end())
         {
@@ -91,11 +93,8 @@ private:
     static uint8_t width_;
     static uint8_t height_;
 
-    static uint8_t * front_framebuffer_;
-    static uint8_t * back_framebuffer_;
-
     bool isDoubleFrameBuffer{true};
-    
+
     Canvas * curent_canvas_;
     std::function<void(uint8_t *)> set_framebuffer_callback_;
 };
