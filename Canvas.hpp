@@ -44,7 +44,9 @@ public:
     {
     }
 
-    virtual void up_date() = 0;
+    virtual void up_date()
+    {
+    }
 
     void update(uint8_t * frame_buffer)
     {
@@ -60,7 +62,7 @@ public:
         ready = true;
     }
 
-    void clear(uint8_t *frame_buffer)
+    void clear(uint8_t * frame_buffer)
     {
         frame_buffer_ = frame_buffer;
         ready = false;
@@ -150,14 +152,20 @@ private:
         uint8_t x_on_canvas = widget_and_position.x + x_offset;
         uint8_t y_on_canvas = widget_and_position.y + y_offset;
 
-        for (uint8_t widget_x{0}; widget_x < widget.getWidth(); ++widget_x)
-        {
-            for (uint8_t widget_y{0}; widget_y < widget.getHeight(); ++widget_y)
-            {
-                uint8_t current_y = y_on_canvas + widget_y;
-                uint8_t current_x = x_on_canvas + widget_x;
+        uint8_t const * const widget_pixel_map{widget.get_pixel_map()};
 
-                put_pixel_on_frame_buffer(current_x, current_y, widget.get_pixel_map()[widget_x + widget_y * widget.getWidth()]);
+        if (widget_pixel_map != nullptr)
+        {
+
+            for (uint8_t widget_x{0}; widget_x < widget.getWidth(); ++widget_x)
+            {
+                for (uint8_t widget_y{0}; widget_y < widget.getHeight(); ++widget_y)
+                {
+                    uint8_t current_y = y_on_canvas + widget_y;
+                    uint8_t current_x = x_on_canvas + widget_x;
+
+                    put_pixel_on_frame_buffer(current_x, current_y, widget_pixel_map[widget_x + widget_y * widget.getWidth()]);
+                }
             }
         }
 
@@ -173,7 +181,7 @@ private:
 
     void clear_framebuffer()
     {
-        memset(frame_buffer_, 0, 32 * 32);
+        memset(frame_buffer_, 0, width_ * height_);
     }
 
     constexpr static uint8_t width_{32};

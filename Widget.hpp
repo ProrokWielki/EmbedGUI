@@ -79,6 +79,10 @@ public:
 
     void clear_children()
     {
+        for (auto & child : children_)
+        {
+            child.widget->clear_children();
+        }
         children_.clear();
     }
 
@@ -92,15 +96,15 @@ protected:
     {
         width_ = width;
     }
-    void setHeight(uint8_t width)
+    void setHeight(uint8_t height)
     {
-        height_ = width;
+        height_ = height;
     }
 
-    uint8_t width_{};
-    uint8_t height_{};
+    uint8_t width_{0};
+    uint8_t height_{0};
 
-    const uint8_t * pixel_map_{};
+    const uint8_t * pixel_map_{nullptr};
 
     mutable bool is_visible_{true};
 
