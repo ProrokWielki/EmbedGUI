@@ -44,6 +44,10 @@ private:
         }
     }
 
+    void update() const override
+    {
+    }
+
     std::array<uint8_t, RADIUS * 2 * RADIUS * 2> pixel_map_{};
     bool filled_;
 };

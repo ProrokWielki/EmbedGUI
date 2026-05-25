@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <span>
 
 #include "GUI.hpp"
 #include "Widget.hpp"
@@ -25,9 +26,9 @@ public:
     /**
      * @brief Adds widget to the canvas.
      */
-    void add(Widget * widget, uint8_t x = 0, uint8_t y = 0)
+    void add(std::span<const std::reference_wrapper<const WidgetAndPositions>> widgets)
     {
-        widgets_and_positions.push_back({.x = x, .y = y, .widget = widget});
+        widgets_and_positions = widgets;
     }
 
     [[nodiscard]] bool isReady() const
@@ -66,7 +67,6 @@ public:
     {
         frame_buffer_ = frame_buffer;
         ready = false;
-        widgets_and_positions.clear();
         clear_framebuffer();
         ready = true;
     }
@@ -102,15 +102,11 @@ private:
         return x < width_ && y < height_;
     }
 
-    void validate_children(const Widget * widget)
+    void validate_children(const Widget & widget)
     {
-        for (const auto & child : widget->get_children())
+        for (const auto & child : widget.get_children())
         {
-            if (child.widget == nullptr)
-            {
-                continue;
-            }
-            child.widget->update();
+            child.widget.update();
             validate_children(child.widget);
         }
     }
@@ -124,11 +120,11 @@ private:
         for (auto & widget : widgets_and_positions)
         {
 
-            if (widget.widget == nullptr || not widget.widget->is_visible())
+            if (not widget.get().widget.is_visible())
             {
                 continue;
             }
-            widget.widget->update();
+            widget.get().widget.update();
             put_widget_on_framebuffer(widget);
         }
 
@@ -147,7 +143,7 @@ private:
 
     void put_widget_on_framebuffer(const WidgetAndPositions & widget_and_position, uint8_t x_offset = 0, uint8_t y_offset = 0)
     {
-        const Widget & widget = *(widget_and_position.widget);
+        const Widget & widget = widget_and_position.widget;
 
         uint8_t x_on_canvas = widget_and_position.x + x_offset;
         uint8_t y_on_canvas = widget_and_position.y + y_offset;
@@ -187,7 +183,7 @@ private:
     constexpr static uint8_t width_{32};
     constexpr static uint8_t height_{32};
 
-    std::vector<WidgetAndPositions> widgets_and_positions;
+    std::span<const std::reference_wrapper<const WidgetAndPositions>> widgets_and_positions;
 
     volatile bool ready{true};
 };

@@ -9,14 +9,14 @@
 #define APP_GUI_WIDGET_HPP_
 
 #include <cstdint>
-#include <vector>
+#include <span>
 
 class Widget;
 
 struct WidgetAndPositions {
     uint8_t x;
     uint8_t y;
-    Widget * widget;
+    const Widget & widget;
 };
 
 class Widget
@@ -39,9 +39,7 @@ public:
         return pixel_map_;
     }
 
-    virtual void update()
-    {
-    }
+    virtual void update() const = 0;
 
     [[nodiscard]] virtual bool is_self_updatable() const
     {
@@ -52,7 +50,7 @@ public:
     {
     }
 
-    void setPixelMap(const uint8_t * pixel_map)
+    void setPixelMap(const uint8_t * pixel_map) const
     {
         pixel_map_ = pixel_map;
     }
@@ -72,44 +70,35 @@ public:
         is_visible_ = true;
     }
 
-    void add_child(Widget * child, uint8_t x = 0, uint8_t y = 0)
+    void add_children(std::span<WidgetAndPositions> children)
     {
-        children_.push_back({x, y, child});
+        children_ = children;
     }
 
-    void clear_children()
-    {
-        for (auto & child : children_)
-        {
-            child.widget->clear_children();
-        }
-        children_.clear();
-    }
-
-    [[nodiscard]] const std::vector<WidgetAndPositions> & get_children() const
+    [[nodiscard]] const std::span<WidgetAndPositions> & get_children() const
     {
         return children_;
     }
 
 protected:
-    void setWidth(uint8_t width)
+    void setWidth(uint8_t width) const
     {
         width_ = width;
     }
-    void setHeight(uint8_t height)
+    void setHeight(uint8_t height) const
     {
         height_ = height;
     }
 
-    uint8_t width_{0};
-    uint8_t height_{0};
+    mutable uint8_t width_{0};
+    mutable uint8_t height_{0};
 
-    const uint8_t * pixel_map_{nullptr};
+    mutable const uint8_t * pixel_map_{nullptr};
 
     mutable bool is_visible_{true};
 
 private:
-    std::vector<WidgetAndPositions> children_{};
+    mutable std::span<WidgetAndPositions> children_{};
 };
 
 #endif /* APP_GUI_WIDGET_HPP_ */

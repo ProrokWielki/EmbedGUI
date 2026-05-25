@@ -26,6 +26,10 @@ public:
         setPixelMap(raw_image);
     }
 
+    void update() const override
+    {
+    }
+
     virtual ~Image()
     {
     }
