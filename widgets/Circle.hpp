@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Widget.hpp"
 
 template<uint8_t RADIUS>
